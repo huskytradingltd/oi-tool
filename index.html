@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OI Levels</title>
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2430;--border:#21262d;
+  --text:#e6edf3;--muted:#7d8590;
+  --call:#3fb950;--put:#f85149;--pain:#d29922;--flip:#a371f7;--accent:#58a6ff;
+  --call-dim:rgba(63,185,80,0.12);--put-dim:rgba(248,81,73,0.12);
+  --pain-dim:rgba(210,153,34,0.12);--flip-dim:rgba(163,113,247,0.12);
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh;}
+header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:16px;}
+header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-0.01em;}
+header span{font-size:12px;color:var(--muted);font-family:var(--mono);}
+.main{padding:20px 24px;max-width:1100px;}
+.paste-label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;}
+textarea{width:100%;height:140px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:10px 12px;resize:vertical;outline:none;transition:border-color 0.15s;}
+textarea:focus{border-color:var(--accent);}
+textarea::placeholder{color:var(--muted);}
+.controls{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+button{background:var(--accent);color:#0d1117;border:none;border-radius:5px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:opacity 0.15s;}
+button:hover{opacity:0.85;}
+button.sec{background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-weight:400;}
+.price-wrap{display:flex;align-items:center;gap:6px;margin-left:8px;}
+.price-wrap label{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.price-wrap input{width:100px;background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:12px;padding:6px 8px;outline:none;}
+.price-wrap input:focus{border-color:var(--accent);}
+.exp-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:20px 0 16px;}
+.exp-tab{background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:var(--mono);transition:all 0.1s;}
+.exp-tab:hover{color:var(--text);border-color:var(--accent);}
+.exp-tab.active{background:var(--accent);color:#0d1117;border-color:var(--accent);font-weight:600;}
+.auto-badge{font-size:9px;background:rgba(88,166,255,0.2);color:#58a6ff;padding:1px 4px;border-radius:2px;margin-left:4px;font-family:var(--mono);}
+.results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+@media(max-width:680px){.results{grid-template-columns:1fr;}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.card.c1{border-left:3px solid var(--call);}.card.c2{border-left:3px solid rgba(63,185,80,0.5);}
+.card.p1{border-left:3px solid var(--put);}.card.p2{border-left:3px solid rgba(248,81,73,0.5);}
+.card.mp{border-left:3px solid var(--pain);}.card.gf{border-left:3px solid var(--flip);}
+.card-lbl{font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:6px;}
+.card-val{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-0.02em;line-height:1;margin-bottom:4px;}
+.card.c1 .card-val{color:var(--call);}.card.c2 .card-val{color:rgba(63,185,80,0.8);}
+.card.p1 .card-val{color:var(--put);}.card.p2 .card-val{color:rgba(248,81,73,0.8);}
+.card.mp .card-val{color:var(--pain);}.card.gf .card-val{color:var(--flip);}
+.card-sub{font-size:12px;color:var(--muted);font-family:var(--mono);}
+.badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-top:6px;font-family:var(--mono);}
+.b-strong{background:rgba(63,185,80,0.15);color:var(--call);}
+.b-mod{background:rgba(210,153,34,0.15);color:var(--pain);}
+.b-weak{background:rgba(125,133,144,0.15);color:var(--muted);}
+.b-flip{background:var(--flip-dim);color:var(--flip);}
+.minis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:680px){.minis{grid-template-columns:repeat(2,1fr);}}
+.mini{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;}
+.mini-lbl{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:4px;}
+.mini-val{font-size:18px;font-weight:600;font-family:var(--mono);}
+.mini-sub{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;}
+.section-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:14px;}
+canvas{width:100%;display:block;}
+.bias-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bias-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.bias-fill{height:100%;border-radius:3px;}
+.bias-txt{font-size:12px;font-family:var(--mono);color:var(--muted);white-space:nowrap;}
+.bias-note{font-size:13px;color:var(--text);margin-top:6px;}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;}
+.tbl-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-family:var(--mono);}
+table{width:100%;border-collapse:collapse;}
+th{text-align:right;padding:8px 14px;font-size:11px;color:var(--muted);font-family:var(--mono);font-weight:400;border-bottom:1px solid var(--border);}
+th:first-child{text-align:left;}
+td{text-align:right;padding:7px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid rgba(33,38,45,0.5);}
+td:first-child{text-align:left;color:var(--text);font-weight:600;}
+tr:last-child td{border-bottom:none;}
+.tc{color:var(--call);}.tp{color:var(--put);}
+tr.hc{background:var(--call-dim);}tr.hc2{background:rgba(63,185,80,0.06);}
+tr.hp{background:var(--put-dim);}tr.hp2{background:rgba(248,81,73,0.06);}
+tr.hm{background:var(--pain-dim);}tr.hf{background:var(--flip-dim);}
+.tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:2px;margin-left:4px;vertical-align:middle;font-family:var(--mono);}
+.tc1{background:var(--call-dim);color:var(--call);}
+.tc2{background:var(--call-dim);color:rgba(63,185,80,0.8);}
+.tp1{background:var(--put-dim);color:var(--put);}
+.tp2{background:var(--put-dim);color:rgba(248,81,73,0.8);}
+.tm{background:var(--pain-dim);color:var(--pain);}
+.tf{background:var(--flip-dim);color:var(--flip);}
+.err{background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:6px;padding:10px 14px;color:var(--put);font-size:12px;font-family:var(--mono);margin-top:8px;}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px;}
+/* Brief */
+.brief{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:16px;}
+.brief-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.brief-title{font-size:13px;font-weight:600;color:var(--text);}
+.brief-date{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.brief-fw{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 14px;margin-bottom:16px;}
+.brief-fw-lbl{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;}
+.brief-fw-name{font-size:13px;font-weight:600;}
+.brief-rows{display:flex;flex-direction:column;gap:8px;}
+.brow{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--border);}
+.brow.pos{border-left-color:var(--call);}
+.brow.neg{border-left-color:var(--put);}
+.brow.neu{border-left-color:var(--pain);}
+.brow.inf{border-left-color:var(--flip);}
+.brow.wrn{border-left-color:#e3b341;}
+.bicon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.bhead{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.bdet{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.4;}
+.bdet b{color:var(--text);}
+.brief-noprice{text-align:center;padding:20px;color:var(--muted);font-size:12px;font-family:var(--mono);}
+.ps{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-family:var(--mono);}
+.ps-w{background:rgba(125,133,144,0.15);color:var(--muted);}
+.ps-m{background:rgba(210,153,34,0.15);color:var(--pain);}
+.ps-s{background:rgba(248,81,73,0.15);color:var(--put);}
+.ps-x{background:rgba(248,81,73,0.25);color:var(--put);font-weight:600;}
+/* Trade card */
+.tc-wrap{margin-top:14px;}
+.tc-section-lbl{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.tcard{border-radius:8px;padding:18px 20px;margin-bottom:10px;border:1px solid var(--border);}
+.tcard.long{background:rgba(63,185,80,0.07);border-color:rgba(63,185,80,0.25);}
+.tcard.short{background:rgba(248,81,73,0.07);border-color:rgba(248,81,73,0.25);}
+.tcard.mpcard{background:rgba(210,153,34,0.07);border-color:rgba(210,153,34,0.25);}
+.tcard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.tdir{font-size:11px;font-weight:700;font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;}
+.tdir.long{color:var(--call);}.tdir.short{color:var(--put);}.tdir.mp{color:var(--pain);}
+.tfw{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:600px){.tgrid{grid-template-columns:repeat(2,1fr);}}
+.tcell-lbl{font-size:9px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;}
+.tcell-val{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-0.02em;line-height:1;}
+.tcell-val.elong{color:var(--call);}.tcell-val.eshort{color:var(--put);}.tcell-val.emp{color:var(--pain);}
+.tcell-val.sl{color:#e3b341;}.tcell-val.t1{color:var(--pain);}.tcell-val.t2{color:var(--accent);}
+.tcell-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.trr{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.rr-item{font-size:11px;font-family:var(--mono);color:var(--muted);}
+.rr-item b{color:var(--text);}
+.rr-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-family:var(--mono);font-weight:600;}
+.rr-good{background:rgba(63,185,80,0.15);color:var(--call);}
+.rr-ok{background:rgba(210,153,34,0.15);color:var(--pain);}
+.rr-poor{background:rgba(248,81,73,0.15);color:var(--put);}
+.tnote{margin-top:10px;font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.5;}
+.mid-range-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+.mid-range-card .tdir{margin-bottom:8px;display:block;}
+.mid-range-detail{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.8;}
+.mid-range-detail b{color:var(--text);}
+.no-setup{text-align:center;padding:16px;color:var(--muted);font-size:11px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+<header>
+  <h1>OI Levels</h1>
+  <span>CME Open Interest Analyser — GC · ES · NQ</span>
+</header>
+<div class="main">
+  <label class="paste-label" for="oiInput">Paste CME heatmap data</label>
+  <textarea id="oiInput" placeholder="Copy the full table from the CME Options Open Interest Heatmap and paste here..."></textarea>
+  <div class="controls">
+    <button id="btnAnalyse">Analyse</button>
+    <button class="sec" id="btnClear">Clear</button>
+    <div class="price-wrap">
+      <label for="curPrice">Current price</label>
+      <input id="curPrice" type="number" step="0.5" placeholder="e.g. 4321">
+    </div>
+  </div>
+  <div id="errMsg"></div>
+  <div id="output"></div>
+</div>
+<script>
+// ── State ──────────────────────────────────────
+var gData = null;
+var gExpIdx = 0;
+var MIN_OI = 1000; // minimum total OI for an expiration to be considered liquid
+
+document.getElementById('btnAnalyse').addEventListener('click', doAnalyse);
+document.getElementById('btnClear').addEventListener('click', doClear);
+document.getElementById('curPrice').addEventListener('input', function(){
+  if (gData) renderUI(gData, gExpIdx);
+});
+
+// ── Parse ──────────────────────────────────────
+function parseOI(raw) {
+  var lines = raw.split('\n').map(function(l){ return l.trimEnd(); });
+  // Find C/P header row
+  var cpIdx = -1;
+  for (var i = 0; i < lines.length; i++) {
+    var cells = lines[i].split('\t').map(function(c){ return c.trim(); }).filter(function(c){ return c !== ''; });
+    if (cells.length >= 4 && cells.every(function(c){ return c === 'C' || c === 'P'; })) { cpIdx = i; break; }
+  }
+  if (cpIdx === -1) throw new Error('Cannot find C/P header row. Copy the full table from CME.');
+  // Find Strike row
+  var siIdx = -1;
+  for (var i = 0; i < cpIdx; i++) {
+    if (lines[i].split('\t')[0].trim() === 'Strike') { siIdx = i; break; }
+  }
+  if (siIdx === -1) throw new Error('Cannot find Strike row.');
+  // Build expirations from stacked header rows
+  var hRows = lines.slice(siIdx, cpIdx).filter(function(l){ return l.trim() && !l.trim().startsWith('Page'); });
+  var exps = [];
+  for (var i = 0; i < hRows.length; i++) {
+    var row = hRows[i].split('\t');
+    var code = (row[1] || '').trim();
+    var dte = null;
+    var nxt = hRows[i+1];
+    if (nxt) { var m = nxt.split('\t')[0].trim().match(/(\d+)\s*DTE/i); if (m) dte = parseInt(m[1]); }
+    if (code) exps.push({ code: code, dte: dte });
+  }
+  if (!exps.length) throw new Error('Cannot parse expiration headers.');
+  // Parse data rows
+  var strikes = [];
+  for (var i = cpIdx + 1; i < lines.length; i++) {
+    var line = lines[i];
+    if (!line.trim() || line.trim().startsWith('Page')) continue;
+    var cells = line.split('\t');
+    var s = parseFloat(cells[0].trim().replace(/,/g,''));
+    if (isNaN(s)) continue;
+    var calls = [], puts = [];
+    for (var j = 0; j < exps.length; j++) {
+      var ci = 1 + j*2, pi = 2 + j*2;
+      calls.push(ci < cells.length ? (parseInt(cells[ci].replace(/,/g,'')) || 0) : 0);
+      puts.push( pi < cells.length ? (parseInt(cells[pi].replace(/,/g,'')) || 0) : 0);
+    }
+    strikes.push({ strike: s, calls: calls, puts: puts });
+  }
+  if (!strikes.length) throw new Error('No strike data rows found.');
+  return { exps: exps, strikes: strikes };
+}
+
+// ── Expiry selection ───────────────────────────
+function expTotalOI(data, i) {
+  return data.strikes.reduce(function(s,r){ return s + (r.calls[i]||0) + (r.puts[i]||0); }, 0);
+}
+
+// Per the course: use the nearest expiration with significant liquidity (>=MIN_OI).
+// If within 5 DTE of the front-month, the weekly (nearest) takes over automatically
+// because it becomes the nearest liquid expiry.
+function selectBestExpiry(data) {
+  var candidates = [];
+  for (var i = 0; i < data.exps.length; i++) {
+    var oi = expTotalOI(data, i);
+    var dte = data.exps[i].dte;
+    if (oi >= MIN_OI && dte !== null) candidates.push({ idx: i, dte: dte, oi: oi });
+  }
+  if (!candidates.length) {
+    // fallback: first with any data
+    for (var i = 0; i < data.exps.length; i++) { if (expTotalOI(data,i)>0) return i; }
+    return 0;
+  }
+  // Sort by DTE ascending — nearest liquid expiry wins
+  candidates.sort(function(a,b){ return a.dte - b.dte; });
+  return candidates[0].idx;
+}
+
+// Which expirations to show as tabs — liquid ones only
+function liquidExps(data) {
+  var out = {};
+  for (var i = 0; i < data.exps.length; i++) {
+    if (expTotalOI(data, i) >= MIN_OI) out[i] = true;
+  }
+  return out;
+}
+
+// ── Compute levels ─────────────────────────────
+function computeLevels(data, ei) {
+  var rows = [];
+  data.strikes.forEach(function(s){
+    var c = s.calls[ei]||0, p = s.puts[ei]||0;
+    if (c>0||p>0) rows.push({strike:s.strike, calls:c, puts:p, total:c+p});
+  });
+  if (!rows.length) return null;
+  var byC = rows.slice().sort(function(a,b){return b.calls-a.calls;});
+  var byP = rows.slice().sort(function(a,b){return b.puts-a.puts;});
+  var cw=byC[0], cw2=byC[1], pw=byP[0], pw2=byP[1];
+  var cStr = (cw2&&cw2.calls>0) ? cw.calls/cw2.calls : 99;
+  var pStr = (pw2&&pw2.puts>0)  ? pw.puts/pw2.puts   : 99;
+  // Max pain
+  var allS = rows.map(function(r){return r.strike;}), minPain=Infinity, mp=null;
+  allS.forEach(function(cand){
+    var pain=0;
+    rows.forEach(function(r){
+      if(r.strike>cand) pain+=r.calls*(r.strike-cand);
+      if(r.strike<cand) pain+=r.puts*(cand-r.strike);
+    });
+    if(pain<minPain){minPain=pain;mp=cand;}
+  });
+  // Totals
+  var tc=rows.reduce(function(s,r){return s+r.calls;},0);
+  var tp=rows.reduce(function(s,r){return s+r.puts;},0);
+  var pc=tc>0?tp/tc:null;
+  // Gamma flip
+  var sorted=rows.slice().sort(function(a,b){return a.strike-b.strike;});
+  var gf=null, prev=null;
+  sorted.forEach(function(r){
+    var above=sorted.filter(function(x){return x.strike>=r.strike;}).reduce(function(s,x){return s+x.calls;},0);
+    var below=sorted.filter(function(x){return x.strike<=r.strike;}).reduce(function(s,x){return s+x.puts;},0);
+    var d=below-above;
+    if(prev!==null&&prev<0&&d>=0&&!gf) gf=r.strike;
+    prev=d;
+  });
+  if(!gf){
+    var minA=Infinity;
+    sorted.forEach(function(r){
+      var above=sorted.filter(function(x){return x.strike>=r.strike;}).reduce(function(s,x){return s+x.calls;},0);
+      var below=sorted.filter(function(x){return x.strike<=r.strike;}).reduce(function(s,x){return s+x.puts;},0);
+      var d=Math.abs(below-above);
+      if(d<minA){minA=d;gf=r.strike;}
+    });
+  }
+  var top12=rows.slice().sort(function(a,b){return b.total-a.total;}).slice(0,12);
+  return {cw:cw,cw2:cw2,cStr:cStr,pw:pw,pw2:pw2,pStr:pStr,mp:mp,gf:gf,tc:tc,tp:tp,pc:pc,rows:rows,sorted:sorted,top12:top12,exp:data.exps[ei]};
+}
+
+// ── Helpers ────────────────────────────────────
+function fmt(n){return n>=1000?(n/1000).toFixed(1)+'k':String(n);}
+function strBadge(r){
+  if(r>=3) return {lbl:'Strong (3x+)',cls:'b-strong'};
+  if(r>=2) return {lbl:'Moderate (2x)',cls:'b-mod'};
+  return {lbl:'Weak (<2x)',cls:'b-weak'};
+}
+function wallOff(r){ if(r>=3) return 2; if(r>=2) return 5; return 8; }
+function rrLabel(r){
+  if(r>=3)   return {lbl:'Excellent R:R',cls:'rr-good'};
+  if(r>=2)   return {lbl:'Good R:R',cls:'rr-good'};
+  if(r>=1.5) return {lbl:'Acceptable R:R',cls:'rr-ok'};
+  return {lbl:'Poor R:R',cls:'rr-poor'};
+}
+
+// ── Trade card ─────────────────────────────────
+function tcard(dir, fw, entry, stop, t1, t2, note) {
+  var risk=Math.abs(entry-stop);
+  var rw1=Math.abs(t1-entry);
+  var rw2=t2!==null?Math.abs(t2-entry):null;
+  var rr1=risk>0?rw1/risk:0;
+  var rr2=(rw2!==null&&risk>0)?rw2/risk:null;
+  var ri=rrLabel(rr1);
+  var cc=dir==='LONG'?'long':dir==='SHORT'?'short':'mpcard';
+  var dc=dir==='LONG'?'long':dir==='SHORT'?'short':'mp';
+  var ec=dir==='LONG'?'elong':dir==='SHORT'?'eshort':'emp';
+  var t2html=t2!==null
+    ?'<div><div class="tcell-lbl">Target 2</div><div class="tcell-val t2">'+t2+'</div>'
+      +'<div class="tcell-sub">'+(rw2!==null?rw2+' pts ('+rr2.toFixed(1)+'R)':'')+'</div></div>'
+    :'<div></div>';
+  return '<div class="tcard '+cc+'">'
+    +'<div class="tcard-header"><span class="tdir '+dc+'">⬤ '+dir+'</span><span class="tfw">'+fw+'</span></div>'
+    +'<div class="tgrid">'
+      +'<div><div class="tcell-lbl">Entry (limit)</div><div class="tcell-val '+ec+'">'+entry+'</div><div class="tcell-sub">limit order</div></div>'
+      +'<div><div class="tcell-lbl">Stop</div><div class="tcell-val sl">'+stop+'</div><div class="tcell-sub">'+risk+' pts risk</div></div>'
+      +'<div><div class="tcell-lbl">Target 1</div><div class="tcell-val t1">'+t1+'</div><div class="tcell-sub">'+rw1+' pts ('+rr1.toFixed(1)+'R)</div></div>'
+      +t2html
+    +'</div>'
+    +'<div class="trr"><span class="rr-badge '+ri.cls+'">'+ri.lbl+'</span>'
+      +'<span class="rr-item">Risk <b>'+risk+' pts</b></span>'
+      +'<span class="rr-item">Reward T1 <b>'+rw1+' pts</b></span>'
+      +(rw2!==null?'<span class="rr-item">Reward T2 <b>'+rw2+' pts</b></span>':'')
+    +'</div>'
+    +(note?'<div class="tnote">'+note+'</div>':'')
+    +'</div>';
+}
+
+function buildTrades(lvl, cp) {
+  if (!cp) return '';
+  var cw=lvl.cw, cw2=lvl.cw2, pw=lvl.pw, pw2=lvl.pw2, mp=lvl.mp, dte=lvl.exp.dte;
+  var cOff=wallOff(lvl.cStr), pOff=wallOff(lvl.pStr);
+  var cBuf=Math.max(5,Math.round(cOff*1.5)), pBuf=Math.max(5,Math.round(pOff*1.5));
+  var html='', BRK=15;
+
+  // Framework 3 — Wall Break (price already through the wall)
+  if (cp >= cw.strike + BRK) {
+    var entry=Math.round(cw.strike+BRK), stop=Math.round(cw.strike-5);
+    var t1=cw2?cw2.strike:Math.round(cw.strike+(cw.strike-pw.strike)*0.5);
+    var t2=cw2?Math.round(cw2.strike+(cw2.strike-cw.strike)*0.3):null;
+    html += tcard('LONG','Framework 3 · Wall Break',entry,stop,t1,t2,
+      'Price '+BRK+'+ pts above call wall — confirmed break. Buy-stop-limit at break level. Stop back inside broken wall. Target secondary call wall'+(cw2?' ('+cw2.strike+')':'')+'. Bigger wall = bigger squeeze.');
+  } else if (cp <= pw.strike - BRK) {
+    var entry=Math.round(pw.strike-BRK), stop=Math.round(pw.strike+5);
+    var t1=pw2?pw2.strike:Math.round(pw.strike-(cw.strike-pw.strike)*0.5);
+    var t2=pw2?Math.round(pw2.strike-(pw.strike-pw2.strike)*0.3):null;
+    html += tcard('SHORT','Framework 3 · Wall Break',entry,stop,t1,t2,
+      'Price '+BRK+'+ pts below put wall — confirmed break. Sell-stop-limit at break level. Stop back inside broken wall. Target secondary put wall'+(pw2?' ('+pw2.strike+')':'')+'. Gamma squeeze accelerates the move.');
+  }
+
+  // Framework 1 — Wall-to-Wall Range
+  else if (cp > pw.strike && cp < cw.strike) {
+    var rng=cw.strike-pw.strike, pct=(cp-pw.strike)/rng;
+    if (pct <= 0.35) {
+      // Lower third — long setup
+      var entry=pw.strike+pOff, stop=pw.strike-pBuf, t1=mp, t2=Math.round(cw.strike-cOff);
+      html += tcard('LONG','Framework 1 · Range',entry,stop,t1,t2,
+        'Price in lower third of range. Limit buy above put wall — structural dealer support. T1 max pain ('+mp+'), T2 near call wall ('+Math.round(cw.strike-cOff)+'). Exit if price closes below put wall.');
+    } else if (pct >= 0.65) {
+      // Upper third — short setup
+      var entry=cw.strike-cOff, stop=cw.strike+cBuf, t1=mp, t2=Math.round(pw.strike+pOff);
+      html += tcard('SHORT','Framework 1 · Range',entry,stop,t1,t2,
+        'Price in upper third of range. Limit sell below call wall — dealer buying evaporates at wall. T1 max pain ('+mp+'), T2 near put wall ('+Math.round(pw.strike+pOff)+'). Exit if price closes above call wall.');
+    } else {
+      // Mid-range — show pending orders
+      html += '<div class="mid-range-card">'
+        +'<span class="tdir mp" style="display:block;margin-bottom:8px;">⬤ MID-RANGE — Pending Orders</span>'
+        +'<div class="mid-range-detail">'
+        +'Price is mid-range — no edge at current levels. Place limit orders in advance:<br>'
+        +'<b style="color:var(--call)">BUY LIMIT: '+(pw.strike+pOff)+'</b> &nbsp;·&nbsp; Stop '+(pw.strike-pBuf)+' &nbsp;·&nbsp; T1 '+mp+' &nbsp;·&nbsp; T2 '+(cw.strike-cOff)+'<br>'
+        +'<b style="color:var(--put)">SELL LIMIT: '+(cw.strike-cOff)+'</b> &nbsp;·&nbsp; Stop '+(cw.strike+cBuf)+' &nbsp;·&nbsp; T1 '+mp+' &nbsp;·&nbsp; T2 '+(pw.strike+pOff)
+        +'</div></div>';
+    }
+  }
+
+  // Framework 2 — Max Pain Reversion (DTE ≤ 4 only)
+  if (dte !== null && dte <= 4 && cp > pw.strike && cp < cw.strike) {
+    var dist=Math.abs(cp-mp);
+    if (dist >= 20) {
+      if (cp > mp) {
+        var entry=cp, stop=cw.strike+cBuf, t1=mp;
+        html += tcard('SHORT','Framework 2 · Max Pain Reversion',entry,stop,t1,null,
+          dte+' DTE — magnetism '+(dte<=1?'at peak':'building')+'. Price '+dist+' pts above max pain ('+mp+'). Short on exhaustion, target max pain. Exit quickly if wrong.');
+      } else {
+        var entry=cp, stop=pw.strike-pBuf, t1=mp;
+        html += tcard('LONG','Framework 2 · Max Pain Reversion',entry,stop,t1,null,
+          dte+' DTE — magnetism '+(dte<=1?'at peak':'building')+'. Price '+dist+' pts below max pain ('+mp+'). Long on stabilisation, target max pain. Exit quickly if wrong.');
+      }
+    }
+  }
+
+  if (!html) html='<div class="no-setup">No trade setups triggered at current price. Levels update as price moves.</div>';
+  return '<div class="tc-wrap"><div class="tc-section-lbl">Trade Setups</div>'+html+'</div>';
+}
+
+// ── Session Brief ──────────────────────────────
+function sessionBrief(lvl, cp) {
+  var cw=lvl.cw, pw=lvl.pw, mp=lvl.mp, gf=lvl.gf, dte=lvl.exp.dte;
+  var psLbl, psCls;
+  if      (dte===null||dte>4){psLbl='Weak (5+ DTE)';psCls='ps-w';}
+  else if (dte>=2)            {psLbl='Building (2-4 DTE)';psCls='ps-m';}
+  else if (dte===1)           {psLbl='Strong (1 DTE)';psCls='ps-s';}
+  else                        {psLbl='Maximum (expiry)';psCls='ps-x';}
+
+  var now=new Date();
+  var dateStr=now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})
+    +' · '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  if (!cp) {
+    return '<div class="brief"><div class="brief-header"><span class="brief-title">Session Brief</span>'
+      +'<span class="brief-date">'+dateStr+'</span></div>'
+      +'<div class="brief-noprice">Enter current price above to generate session brief</div></div>';
+  }
+
+  var rows=[];
+
+  // 1. Gamma regime
+  if (gf!==null) {
+    if (cp>gf) rows.push({t:'neg',i:'⚡',h:'Short Gamma Regime',
+      d:'Price <b>'+cp+'</b> above gamma flip <b>'+gf+'</b>. Dealer hedging amplifies moves. Expect trending, accelerating behaviour. Breakouts carry further; fades are riskier.'});
+    else if (cp<gf) rows.push({t:'pos',i:'〰',h:'Long Gamma Regime',
+      d:'Price <b>'+cp+'</b> below gamma flip <b>'+gf+'</b>. Dealer hedging dampens moves. Expect mean-reverting, range-bound behaviour. Range trades have better odds.'});
+    else rows.push({t:'neu',i:'⚖',h:'At Gamma Flip',
+      d:'Price sitting at the gamma flip <b>'+gf+'</b>. Regime transitioning — direction of next move likely sets character of the session.'});
+  }
+
+  // 2. Position vs walls
+  var rng=cw.strike-pw.strike;
+  var pct=rng>0?((cp-pw.strike)/rng*100).toFixed(0):null;
+  if (cp>=cw.strike) {
+    rows.push({t:'neg',i:'🧱',h:'At or Above Call Wall — Resistance Zone',
+      d:'Price <b>'+cp+'</b> at call wall <b>'+cw.strike+'</b> ('+fmt(cw.calls)+' contracts). Dealer buying that supported rally is complete — fuel gone. Watch for stall or reversal. Clean break above → Framework 3 gamma squeeze toward '+(lvl.cw2?lvl.cw2.strike:'next level')+'.'});
+  } else if (cp<=pw.strike) {
+    rows.push({t:'pos',i:'🧱',h:'At or Below Put Wall — Support Zone',
+      d:'Price <b>'+cp+'</b> at put wall <b>'+pw.strike+'</b> ('+fmt(pw.puts)+' contracts). Dealer selling pressure exhausted — buying support kicks in. Watch for bounce. Clean break below → Framework 3 gamma squeeze toward '+(lvl.pw2?lvl.pw2.strike:'next level')+'.'});
+  } else {
+    var dC=cw.strike-cp, dP=cp-pw.strike;
+    rows.push({t:'neu',i:'↔',h:'Between Walls — Framework 1 Active',
+      d:'Price <b>'+cp+'</b> sits '+(pct!==null?pct+'% of the way ':'')+' through the range. '
+        +'<b>'+dP+'</b> pts above put wall (<b>'+pw.strike+'</b>), <b>'+dC+'</b> pts below call wall (<b>'+cw.strike+'</b>). '
+        +'Range-trade conditions: fade approaches to walls, target opposite wall or max pain.'});
+  }
+
+  // 3. Max pain
+  var dmp=Math.abs(cp-mp);
+  if (cp===mp) {
+    rows.push({t:'neu',i:'🎯',h:'At Max Pain',
+      d:'Price at max pain <b>'+mp+'</b>. <span class="ps '+psCls+'">'+psLbl+'</span> Balanced — no directional pull currently.'});
+  } else {
+    rows.push({t:'inf',i:'🎯',h:'Max Pain Pull — '+mp+' ('+dmp+' pts '+(cp>mp?'below':'above')+')',
+      d:'Max pain <b>'+mp+'</b> is <b>'+dmp+'</b> pts '+(cp>mp?'below':'above')+' price. '
+        +'<span class="ps '+psCls+'">'+psLbl+'</span> '
+        +(dte!==null&&dte<=4?'Gravitational pull active — bias toward <b>'+mp+'</b> into expiry.':'Too early for strong pull. Monitor as DTE decreases.')});
+  }
+
+  // 4. Nearest levels — calls only above, puts only below
+  var aboveLvls=[{price:cw.strike,label:'Call Wall',color:'#3fb950'}];
+  if (lvl.cw2) aboveLvls.push({price:lvl.cw2.strike,label:'Call Wall 2',color:'#3fb950'});
+  if (gf&&gf>cp) aboveLvls.push({price:gf,label:'Gamma Flip',color:'#a371f7'});
+  if (mp>cp) aboveLvls.push({price:mp,label:'Max Pain',color:'#d29922'});
+  aboveLvls=aboveLvls.filter(function(l){return l.price>cp;}).sort(function(a,b){return a.price-b.price;});
+
+  var belowLvls=[{price:pw.strike,label:'Put Wall',color:'#f85149'}];
+  if (lvl.pw2) belowLvls.push({price:lvl.pw2.strike,label:'Put Wall 2',color:'#f85149'});
+  if (gf&&gf<cp) belowLvls.push({price:gf,label:'Gamma Flip',color:'#a371f7'});
+  if (mp<cp) belowLvls.push({price:mp,label:'Max Pain',color:'#d29922'});
+  belowLvls=belowLvls.filter(function(l){return l.price<cp;}).sort(function(a,b){return b.price-a.price;});
+
+  var nrTxt='';
+  if (aboveLvls.length) nrTxt+='Nearest resistance: <b style="color:'+aboveLvls[0].color+'">'+aboveLvls[0].price+' ('+aboveLvls[0].label+')</b> — '+(aboveLvls[0].price-cp)+' pts';
+  if (aboveLvls.length&&belowLvls.length) nrTxt+=' &nbsp;·&nbsp; ';
+  if (belowLvls.length) nrTxt+='Nearest support: <b style="color:'+belowLvls[0].color+'">'+belowLvls[0].price+' ('+belowLvls[0].label+')</b> — '+(cp-belowLvls[0].price)+' pts';
+  rows.push({t:'inf',i:'📍',h:'Nearest Levels',d:nrTxt});
+
+  // 5. Structural stops
+  rows.push({t:'wrn',i:'🛑',h:'Structural Stop Levels',
+    d:'Long stop: below <b>'+(belowLvls.length?belowLvls[0].price+' ('+belowLvls[0].label+')':'put wall')+'</b>'
+      +' &nbsp;·&nbsp; Short stop: above <b>'+(aboveLvls.length?aboveLvls[0].price+' ('+aboveLvls[0].label+')':'call wall')+'</b>'});
+
+  // 6. Expiry warning
+  if (dte!==null&&dte<=2) {
+    rows.push({t:'wrn',i:'⏰',h:'Expiry Proximity Warning',
+      d:'<b>'+dte+' DTE</b> — gamma effects at peak intensity. Walls most magnetic; moves into walls will be sharp then stall suddenly. Max pain reversion (Framework 2) highest probability in final hours.'});
+  }
+
+  // Active framework label
+  var fwName, fwColor;
+  if (cp>=cw.strike||cp<=pw.strike) {
+    if (dte!==null&&dte<=4&&dmp>20) {fwName='Framework 2 · Max Pain Reversion';fwColor='#d29922';}
+    else {fwName='Framework 3 · Wall Break Momentum';fwColor='#f85149';}
+  } else if (dte!==null&&dte<=4&&dmp>20) {
+    fwName='Framework 2 · Max Pain Reversion';fwColor='#d29922';
+  } else {
+    fwName='Framework 1 · Wall-to-Wall Range';fwColor='#58a6ff';
+  }
+
+  var html='<div class="brief">'
+    +'<div class="brief-header"><span class="brief-title">Session Brief</span><span class="brief-date">'+dateStr+'</span></div>'
+    +'<div class="brief-fw"><span class="brief-fw-lbl">Active framework</span><span class="brief-fw-name" style="color:'+fwColor+'">'+fwName+'</span></div>'
+    +'<div class="brief-rows">';
+  rows.forEach(function(r){
+    html+='<div class="brow '+r.t+'"><span class="bicon">'+r.i+'</span><div><div class="bhead">'+r.h+'</div><div class="bdet">'+r.d+'</div></div></div>';
+  });
+  html+='</div>'+buildTrades(lvl,cp)+'</div>';
+  return html;
+}
+
+// ── Actions ────────────────────────────────────
+function doClear(){
+  document.getElementById('oiInput').value='';
+  document.getElementById('output').innerHTML='';
+  document.getElementById('errMsg').innerHTML='';
+  document.getElementById('curPrice').value='';
+  gData=null; gExpIdx=0;
+}
+function showErr(m){ document.getElementById('errMsg').innerHTML='<div class="err">'+m+'</div>'; }
+
+function doAnalyse(){
+  document.getElementById('errMsg').innerHTML='';
+  var raw=document.getElementById('oiInput').value.trim();
+  if(!raw){showErr('Nothing pasted yet.');return;}
+  try {
+    gData=parseOI(raw);
+    gExpIdx=selectBestExpiry(gData); // ← nearest liquid expiry per the course
+    renderUI(gData,gExpIdx);
+  } catch(e){ showErr('Parse error: '+e.message); }
+}
+
+function switchExp(idx){ gExpIdx=idx; renderUI(gData,idx); }
+
+// ── Render ─────────────────────────────────────
+function renderUI(data, ei) {
+  var lvl=computeLevels(data,ei);
+  var out=document.getElementById('output');
+  if(!lvl){out.innerHTML='<div class="empty">No data for this expiration.</div>';return;}
+
+  var cp=parseFloat(document.getElementById('curPrice').value)||null;
+  var cw=lvl.cw,cw2=lvl.cw2,pw=lvl.pw,pw2=lvl.pw2,mp=lvl.mp,gf=lvl.gf;
+  var cs=strBadge(lvl.cStr),ps=strBadge(lvl.pStr);
+
+  // Bias
+  var bColor='#7d8590',bText='',bFill=50;
+  if(lvl.pc!==null){
+    if(lvl.pc<0.7)      {bColor='#3fb950';bText='Bullish positioning';bFill=20;}
+    else if(lvl.pc<1.0) {bColor='#3fb950';bText='Moderately bullish';bFill=35;}
+    else if(lvl.pc<=1.3){bColor='#d29922';bText='Neutral / hedging';bFill=55;}
+    else                {bColor='#f85149';bText='Bearish / heavy hedging';bFill=80;}
+  }
+
+  // Tabs — liquid expirations only
+  var liq=liquidExps(data);
+  var tabs=data.exps.map(function(e,i){
+    if(!liq[i]) return '';
+    var isAuto=(i===gExpIdx);
+    return '<div class="exp-tab'+(i===ei?' active':'')+'" onclick="switchExp('+i+')">'
+      +e.code+'<span style="font-size:10px;opacity:0.7;margin-left:4px">'+(e.dte!==null?e.dte+'d':'')+'</span>'
+      +(isAuto&&i===ei?'<span class="auto-badge">AUTO</span>':'')
+      +'</div>';
+  }).join('');
+
+  // Table
+  var tRows=lvl.top12.map(function(r){
+    var cls='',tags='';
+    if(r.strike===cw.strike)           {cls='hc'; tags+='<span class="tag tc1">CALL WALL</span>';}
+    else if(cw2&&r.strike===cw2.strike){cls='hc2';tags+='<span class="tag tc2">CALL 2</span>';}
+    if(r.strike===pw.strike)           {cls=cls||'hp'; tags+='<span class="tag tp1">PUT WALL</span>';}
+    else if(pw2&&r.strike===pw2.strike){cls=cls||'hp2';tags+='<span class="tag tp2">PUT 2</span>';}
+    if(r.strike===mp)                  {cls=cls||'hm';tags+='<span class="tag tm">MAX PAIN</span>';}
+    if(gf&&r.strike===gf)             {cls=cls||'hf';tags+='<span class="tag tf">FLIP</span>';}
+    return '<tr class="'+cls+'"><td>'+r.strike+tags+'</td>'
+      +'<td class="tc">'+(r.calls>0?fmt(r.calls):'—')+'</td>'
+      +'<td class="tp">'+(r.puts>0?fmt(r.puts):'—')+'</td>'
+      +'<td>'+fmt(r.total)+'</td></tr>';
+  }).join('');
+
+  var note='Expected range: <span style="color:var(--put)">'+pw.strike+'</span> → '
+    +'<span style="color:var(--call)">'+cw.strike+'</span> &nbsp;·&nbsp; Expiry magnet: <span style="color:var(--pain)">'+mp+'</span>';
+
+  out.innerHTML=
+    '<div class="exp-tabs">'+tabs+'</div>'
+    +sessionBrief(lvl,cp)
+    +'<div class="results">'
+      +'<div class="card c1"><div class="card-lbl">Call Wall · Primary Resistance</div><div class="card-val">'+cw.strike+'</div><div class="card-sub">'+fmt(cw.calls)+' contracts</div><div class="badge '+cs.cls+'">'+cs.lbl+'</div></div>'
+      +'<div class="card p1"><div class="card-lbl">Put Wall · Primary Support</div><div class="card-val">'+pw.strike+'</div><div class="card-sub">'+fmt(pw.puts)+' contracts</div><div class="badge '+ps.cls+'">'+ps.lbl+'</div></div>'
+      +'<div class="card mp"><div class="card-lbl">Max Pain · Expiry Magnet</div><div class="card-val">'+mp+'</div><div class="card-sub">Lowest total pain strike</div><div class="badge b-mod">Near-expiry bias</div></div>'
+      +'<div class="card c2"><div class="card-lbl">Call Wall 2 · Secondary Resistance</div><div class="card-val">'+(cw2?cw2.strike:'—')+'</div><div class="card-sub">'+(cw2?fmt(cw2.calls)+' contracts':'No secondary level')+'</div><div class="badge b-weak">Next target if primary breaks</div></div>'
+      +'<div class="card p2"><div class="card-lbl">Put Wall 2 · Secondary Support</div><div class="card-val">'+(pw2?pw2.strike:'—')+'</div><div class="card-sub">'+(pw2?fmt(pw2.puts)+' contracts':'No secondary level')+'</div><div class="badge b-weak">Next target if primary breaks</div></div>'
+      +'<div class="card gf"><div class="card-lbl">Gamma Flip · Regime Change</div><div class="card-val">'+(gf!==null?gf:'—')+'</div><div class="card-sub">Puts below = calls above</div><div class="badge b-flip">Above: accelerates · Below: stabilises</div></div>'
+    +'</div>'
+    +'<div class="minis">'
+      +'<div class="mini"><div class="mini-lbl">P/C Ratio</div><div class="mini-val" style="color:'+bColor+'">'+(lvl.pc!==null?lvl.pc.toFixed(2):'N/A')+'</div><div class="mini-sub">'+bText+'</div></div>'
+      +'<div class="mini"><div class="mini-lbl">Total Call OI</div><div class="mini-val" style="color:var(--call)">'+fmt(lvl.tc)+'</div><div class="mini-sub">all strikes</div></div>'
+      +'<div class="mini"><div class="mini-lbl">Total Put OI</div><div class="mini-val" style="color:var(--put)">'+fmt(lvl.tp)+'</div><div class="mini-sub">all strikes</div></div>'
+      +'<div class="mini"><div class="mini-lbl">DTE</div><div class="mini-val">'+(lvl.exp.dte!==null?lvl.exp.dte:'—')+'</div><div class="mini-sub">'+lvl.exp.code+'</div></div>'
+    +'</div>'
+    +'<div class="section"><div class="bias-row"><span class="bias-txt" style="color:var(--call)">Calls</span><div class="bias-bar"><div class="bias-fill" style="width:'+bFill+'%;background:'+bColor+'"></div></div><span class="bias-txt" style="color:var(--put)">Puts</span></div><div class="bias-note">'+note+'</div></div>'
+    +'<div class="section"><div class="section-lbl">Probability Zones — OI structure across all expirations</div><canvas id="zonesChart" style="height:340px"></canvas></div>'
+    +'<div class="section"><div class="section-lbl">OI Distribution — '+lvl.exp.code+(lvl.exp.dte!==null?' ('+lvl.exp.dte+' DTE)':'')+'</div><canvas id="oiChart" style="height:300px"></canvas></div>'
+    +'<div class="tbl-wrap"><div class="tbl-hdr">Top strikes by open interest</div>'
+      +'<table><thead><tr><th style="text-align:left">Strike</th><th>Calls</th><th>Puts</th><th>Total</th></tr></thead>'
+      +'<tbody>'+tRows+'</tbody></table></div>';
+
+  setTimeout(function(){ drawZones(data,cp); drawOI(lvl); },0);
+}
+
+// ── Probability zones chart ────────────────────
+function drawZones(data,cp){
+  var canvas=document.getElementById('zonesChart');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var dpr=window.devicePixelRatio||1, W=canvas.getBoundingClientRect().width, H=340;
+  canvas.width=W*dpr; canvas.height=H*dpr; ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+
+  var expLvls=[];
+  for(var i=0;i<data.exps.length;i++){
+    var l=computeLevels(data,i);
+    if(!l||l.tc+l.tp<MIN_OI) continue;
+    expLvls.push(l);
+  }
+  if(expLvls.length<2){
+    ctx.fillStyle='#7d8590';ctx.font='12px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText('Need at least 2 liquid expirations',W/2,H/2);return;
+  }
+
+  var allP=[];
+  expLvls.forEach(function(l){
+    allP.push(l.cw.strike,l.pw.strike,l.mp);
+    if(l.gf) allP.push(l.gf);
+    if(l.cw2) allP.push(l.cw2.strike);
+    if(l.pw2) allP.push(l.pw2.strike);
+  });
+  if(cp) allP.push(cp);
+  var pMin=Math.min.apply(null,allP), pMax=Math.max.apply(null,allP);
+  var pad2=(pMax-pMin)*0.12; pMin-=pad2; pMax+=pad2;
+  var pad={top:32,bottom:52,left:62,right:20};
+  var cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  function yP(p){return pad.top+cH-((p-pMin)/(pMax-pMin))*cH;}
+  var maxDTE=0;
+  expLvls.forEach(function(l){if((l.exp.dte||0)>maxDTE) maxDTE=l.exp.dte||0;});
+  function xT(dte){return maxDTE===0?pad.left+cW/2:pad.left+((dte||0)/maxDTE)*cW;}
+
+  ctx.strokeStyle='rgba(33,38,45,0.8)';ctx.lineWidth=1;
+  for(var g=0;g<=6;g++){
+    var gp=pMin+((pMax-pMin)/6)*g, gy=yP(gp);
+    ctx.beginPath();ctx.moveTo(pad.left,gy);ctx.lineTo(W-pad.right,gy);ctx.stroke();
+    ctx.fillStyle='#7d8590';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='right';
+    ctx.fillText(Math.round(gp),pad.left-4,gy+3);
+  }
+  expLvls.forEach(function(l){
+    var x=xT(l.exp.dte||0);
+    ctx.strokeStyle='rgba(33,38,45,0.5)';ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,pad.top+cH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#7d8590';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(l.exp.code,x,H-pad.bottom+14);
+    if(l.exp.dte!==null) ctx.fillText(l.exp.dte+'d',x,H-pad.bottom+26);
+  });
+  ctx.strokeStyle='rgba(88,166,255,0.25)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(pad.left,pad.top);ctx.lineTo(pad.left,pad.top+cH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#58a6ff';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+  ctx.fillText('Today',pad.left,H-pad.bottom+14);
+  if(expLvls.length>=2){
+    ctx.beginPath();
+    expLvls.forEach(function(l,i){var x=xT(l.exp.dte||0),y=yP(l.cw.strike);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+    for(var i=expLvls.length-1;i>=0;i--){var l=expLvls[i];ctx.lineTo(xT(l.exp.dte||0),yP(l.pw.strike));}
+    ctx.closePath();ctx.fillStyle='rgba(88,166,255,0.05)';ctx.fill();
+  }
+  function lline(getter,color,dash){
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash(dash||[]);ctx.beginPath();
+    var started=false;
+    expLvls.forEach(function(l){var v=getter(l);if(v==null)return;var x=xT(l.exp.dte||0),y=yP(v);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);});
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  lline(function(l){return l.cw2?l.cw2.strike:null;},'rgba(63,185,80,0.4)',[2,3]);
+  lline(function(l){return l.pw2?l.pw2.strike:null;},'rgba(248,81,73,0.4)',[2,3]);
+  lline(function(l){return l.cw.strike;},'#3fb950');
+  lline(function(l){return l.pw.strike;},'#f85149');
+  lline(function(l){return l.mp;},'#d29922',[4,3]);
+  lline(function(l){return l.gf;},'#a371f7',[2,4]);
+  expLvls.forEach(function(l){
+    var x=xT(l.exp.dte||0);
+    [{v:l.cw.strike,c:'#3fb950'},{v:l.pw.strike,c:'#f85149'},{v:l.mp,c:'#d29922'},{v:l.gf,c:'#a371f7'}].forEach(function(pt){
+      if(pt.v==null)return;
+      ctx.beginPath();ctx.arc(x,yP(pt.v),3.5,0,Math.PI*2);ctx.fillStyle=pt.c;ctx.fill();
+    });
+  });
+  if(cp){
+    var y=yP(cp);
+    ctx.strokeStyle='#58a6ff';ctx.lineWidth=1.5;ctx.setLineDash([6,3]);
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#58a6ff';ctx.font='bold 10px JetBrains Mono,monospace';ctx.textAlign='left';
+    ctx.fillText('NOW '+cp,pad.left+4,y-5);
+  }
+  var leg=[{c:'#3fb950',l:'Call wall',d:false},{c:'#f85149',l:'Put wall',d:false},{c:'#d29922',l:'Max pain',d:true},{c:'#a371f7',l:'Gamma flip',d:true},{c:'#58a6ff',l:'Current price',d:true}];
+  var lx=pad.left, ly=pad.top-14;
+  leg.forEach(function(item){
+    ctx.strokeStyle=item.c;ctx.lineWidth=1.5;ctx.setLineDash(item.d?[4,3]:[]);
+    ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+16,ly);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#7d8590';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='left';
+    ctx.fillText(item.l,lx+20,ly+3);lx+=ctx.measureText(item.l).width+38;
+  });
+}
+
+// ── OI distribution chart ──────────────────────
+function drawOI(lvl){
+  var canvas=document.getElementById('oiChart');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var dpr=window.devicePixelRatio||1, W=canvas.getBoundingClientRect().width, H=300;
+  canvas.width=W*dpr;canvas.height=H*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  var sorted=lvl.sorted.slice();
+  if(!sorted.length) return;
+  var pad={top:24,bottom:40,left:55,right:20};
+  var cW=W-pad.left-pad.right, cH=H-pad.top-pad.bottom;
+  var maxOI=Math.max.apply(null,sorted.map(function(r){return Math.max(r.calls,r.puts);}));
+  var n=sorted.length, slotW=cW/n;
+  function xI(i){return pad.left+i*slotW+slotW/2;}
+  function yV(v){return pad.top+cH-(v/maxOI)*cH;}
+  ctx.strokeStyle='rgba(33,38,45,0.8)';ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){
+    var y=pad.top+(cH/4)*g;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();
+    ctx.fillStyle='#7d8590';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='right';
+    ctx.fillText(fmt(Math.round(maxOI-(maxOI/4)*g)),pad.left-4,y+3);
+  }
+  var bw=Math.max(2,slotW/2-1);
+  sorted.forEach(function(r,i){
+    var x=xI(i);
+    if(r.calls>0){
+      var h=(r.calls/maxOI)*cH;
+      if(r.strike===lvl.cw.strike) ctx.fillStyle='#3fb950';
+      else if(lvl.cw2&&r.strike===lvl.cw2.strike) ctx.fillStyle='rgba(63,185,80,0.6)';
+      else ctx.fillStyle='rgba(63,185,80,0.28)';
+      ctx.fillRect(x,yV(r.calls),bw,h);
+    }
+    if(r.puts>0){
+      var h=(r.puts/maxOI)*cH;
+      if(r.strike===lvl.pw.strike) ctx.fillStyle='#f85149';
+      else if(lvl.pw2&&r.strike===lvl.pw2.strike) ctx.fillStyle='rgba(248,81,73,0.6)';
+      else ctx.fillStyle='rgba(248,81,73,0.28)';
+      ctx.fillRect(x-bw,yV(r.puts),bw,h);
+    }
+  });
+  var step=Math.max(1,Math.floor(n/12));
+  ctx.fillStyle='#7d8590';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+  sorted.forEach(function(r,i){if(i%step===0) ctx.fillText(r.strike,xI(i),H-pad.bottom+14);});
+  function vLine(strike,color,lbl,dash){
+    if(strike==null) return;
+    var idx=sorted.findIndex(function(r){return r.strike===strike;});
+    if(idx===-1) return;
+    var x=xI(idx);
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash(dash||[4,3]);
+    ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,pad.top+cH);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=color;ctx.font='bold 10px JetBrains Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(lbl,x,pad.top-6);
+  }
+  if(lvl.pw2) vLine(lvl.pw2.strike,'rgba(248,81,73,0.5)','PUT2',[2,3]);
+  if(lvl.cw2) vLine(lvl.cw2.strike,'rgba(63,185,80,0.5)','CALL2',[2,3]);
+  vLine(lvl.pw.strike,'#f85149','PUT');
+  vLine(lvl.mp,'#d29922','PAIN');
+  vLine(lvl.gf,'#a371f7','FLIP');
+  vLine(lvl.cw.strike,'#3fb950','CALL');
+}
+</script>
+</body>
+</html>
