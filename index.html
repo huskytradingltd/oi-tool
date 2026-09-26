@@ -172,7 +172,7 @@ tr.hm{background:var(--pain-dim);}tr.hf{background:var(--flip-dim);}
 // ── State ──────────────────────────────────────
 var gData = null;
 var gExpIdx = 0;
-var MIN_OI = 1000; // minimum total OI for an expiration to be considered liquid
+var MIN_OI = 8000; // minimum total OI for an expiration to be considered liquid
 
 document.getElementById('btnAnalyse').addEventListener('click', doAnalyse);
 document.getElementById('btnClear').addEventListener('click', doClear);
@@ -233,31 +233,54 @@ function expTotalOI(data, i) {
   return data.strikes.reduce(function(s,r){ return s + (r.calls[i]||0) + (r.puts[i]||0); }, 0);
 }
 
-// Per the course: use the nearest expiration with significant liquidity (>=MIN_OI).
-// If within 5 DTE of the front-month, the weekly (nearest) takes over automatically
-// because it becomes the nearest liquid expiry.
+// Per the course:
+// 1. Find the front-month = expiration with the highest total OI (most significant)
+// 2. If today is within 5 DTE of that front-month, switch to the nearest weekly instead
+// 3. Otherwise use the front-month
 function selectBestExpiry(data) {
-  var candidates = [];
+  var expsWithOI = [];
   for (var i = 0; i < data.exps.length; i++) {
     var oi = expTotalOI(data, i);
     var dte = data.exps[i].dte;
-    if (oi >= MIN_OI && dte !== null) candidates.push({ idx: i, dte: dte, oi: oi });
+    if (oi > 0 && dte !== null) expsWithOI.push({ idx: i, dte: dte, oi: oi });
   }
-  if (!candidates.length) {
-    // fallback: first with any data
-    for (var i = 0; i < data.exps.length; i++) { if (expTotalOI(data,i)>0) return i; }
-    return 0;
+  if (!expsWithOI.length) return 0;
+  // Front-month = highest OI expiration
+  var frontMonth = expsWithOI.slice().sort(function(a,b){ return b.oi - a.oi; })[0];
+  // Within 5 DTE of front-month? Switch to nearest weekly
+  if (frontMonth.dte <= 5) {
+    var nearest = expsWithOI.slice().sort(function(a,b){ return a.dte - b.dte; })[0];
+    return nearest.idx;
   }
-  // Sort by DTE ascending — nearest liquid expiry wins
-  candidates.sort(function(a,b){ return a.dte - b.dte; });
-  return candidates[0].idx;
+  // Otherwise use the front-month
+  return frontMonth.idx;
 }
 
-// Which expirations to show as tabs — liquid ones only
+// Which expirations to show as tabs:
+// - The auto-selected expiry (always)
+// - The front-month (highest OI)
+// - Any expiry within 5 DTE (weekly candidates)
+// - Any expiry with OI >= MIN_OI (liquid enough to be meaningful)
 function liquidExps(data) {
   var out = {};
+  var expsWithOI = [];
   for (var i = 0; i < data.exps.length; i++) {
-    if (expTotalOI(data, i) >= MIN_OI) out[i] = true;
+    var oi = expTotalOI(data, i);
+    var dte = data.exps[i].dte;
+    if (oi > 0 && dte !== null) expsWithOI.push({ idx: i, dte: dte, oi: oi });
+  }
+  if (!expsWithOI.length) return out;
+  // Front-month index
+  var fmIdx = expsWithOI.slice().sort(function(a,b){ return b.oi - a.oi; })[0].idx;
+  out[fmIdx] = true;
+  // Auto-selected
+  out[gExpIdx] = true;
+  // Weeklies (DTE <= 5) and high-OI expirations
+  for (var i = 0; i < data.exps.length; i++) {
+    var oi = expTotalOI(data, i);
+    var dte = data.exps[i].dte;
+    if (dte !== null && dte <= 5 && oi > 0) out[i] = true;
+    if (oi >= MIN_OI) out[i] = true;
   }
   return out;
 }
