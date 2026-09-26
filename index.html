@@ -234,25 +234,35 @@ function expTotalOI(data, i) {
 }
 
 // Per the course:
-// 1. Find the front-month = expiration with the highest total OI (most significant)
-// 2. If today is within 5 DTE of that front-month, switch to the nearest weekly instead
+// 1. Front-month = NEAREST expiration with significant OI (>= MIN_OI)
+//    Nearest liquid expiry is where gamma is most active
+// 2. If that front-month is within 5 DTE, switch to the nearest weekly instead
 // 3. Otherwise use the front-month
 function selectBestExpiry(data) {
-  var expsWithOI = [];
+  var liquid = [];
   for (var i = 0; i < data.exps.length; i++) {
     var oi = expTotalOI(data, i);
     var dte = data.exps[i].dte;
-    if (oi > 0 && dte !== null) expsWithOI.push({ idx: i, dte: dte, oi: oi });
+    if (oi >= MIN_OI && dte !== null) liquid.push({ idx: i, dte: dte, oi: oi });
   }
-  if (!expsWithOI.length) return 0;
-  // Front-month = highest OI expiration
-  var frontMonth = expsWithOI.slice().sort(function(a,b){ return b.oi - a.oi; })[0];
-  // Within 5 DTE of front-month? Switch to nearest weekly
+  if (!liquid.length) {
+    for (var i = 0; i < data.exps.length; i++) { if (expTotalOI(data,i)>0) return i; }
+    return 0;
+  }
+  // Sort by DTE ascending — nearest liquid expiry is the front-month
+  liquid.sort(function(a,b){ return a.dte - b.dte; });
+  var frontMonth = liquid[0];
+  // Within 5 DTE? Use nearest weekly (any OI)
   if (frontMonth.dte <= 5) {
-    var nearest = expsWithOI.slice().sort(function(a,b){ return a.dte - b.dte; })[0];
-    return nearest.idx;
+    var all = [];
+    for (var i = 0; i < data.exps.length; i++) {
+      var oi = expTotalOI(data, i);
+      var dte = data.exps[i].dte;
+      if (oi > 0 && dte !== null) all.push({ idx: i, dte: dte });
+    }
+    all.sort(function(a,b){ return a.dte - b.dte; });
+    return all[0].idx;
   }
-  // Otherwise use the front-month
   return frontMonth.idx;
 }
 
@@ -409,14 +419,22 @@ function buildTrades(lvl, cp) {
     var rng=cw.strike-pw.strike, pct=(cp-pw.strike)/rng;
     if (pct <= 0.35) {
       // Lower third — long setup
-      var entry=pw.strike+pOff, stop=pw.strike-pBuf, t1=mp, t2=Math.round(cw.strike-cOff);
-      html += tcard('LONG','Framework 1 · Range',entry,stop,t1,t2,
-        'Price in lower third of range. Limit buy above put wall — structural dealer support. T1 max pain ('+mp+'), T2 near call wall ('+Math.round(cw.strike-cOff)+'). Exit if price closes below put wall.');
+      var entry=pw.strike+pOff, stop=pw.strike-pBuf;
+      // T1: max pain if above entry, else midpoint of range
+      var t1Long = mp > entry ? mp : Math.round(pw.strike + rng*0.5);
+      // T2: call wall offset, must be above T1
+      var t2Long = Math.round(cw.strike-cOff) > t1Long ? Math.round(cw.strike-cOff) : null;
+      html += tcard('LONG','Framework 1 · Range',entry,stop,t1Long,t2Long,
+        'Price in lower third of range. Limit buy above put wall — structural dealer support. T1 '+(mp>entry?'max pain ('+mp+')':'range midpoint ('+t1Long+')')+', T2 near call wall'+(t2Long?' ('+t2Long+')':'')+'. Exit if price closes below put wall.');
     } else if (pct >= 0.65) {
       // Upper third — short setup
-      var entry=cw.strike-cOff, stop=cw.strike+cBuf, t1=mp, t2=Math.round(pw.strike+pOff);
-      html += tcard('SHORT','Framework 1 · Range',entry,stop,t1,t2,
-        'Price in upper third of range. Limit sell below call wall — dealer buying evaporates at wall. T1 max pain ('+mp+'), T2 near put wall ('+Math.round(pw.strike+pOff)+'). Exit if price closes above call wall.');
+      var entry=cw.strike-cOff, stop=cw.strike+cBuf;
+      // T1: max pain if below entry, else midpoint of range
+      var t1Short = mp < entry ? mp : Math.round(cw.strike - rng*0.5);
+      // T2: put wall offset, must be below T1
+      var t2Short = Math.round(pw.strike+pOff) < t1Short ? Math.round(pw.strike+pOff) : null;
+      html += tcard('SHORT','Framework 1 · Range',entry,stop,t1Short,t2Short,
+        'Price in upper third of range. Limit sell below call wall — dealer buying evaporates at wall. T1 '+(mp<entry?'max pain ('+mp+')':'range midpoint ('+t1Short+')')+', T2 near put wall'+(t2Short?' ('+t2Short+')':'')+'. Exit if price closes above call wall.');
     } else {
       // Mid-range — show pending orders
       html += '<div class="mid-range-card">'
